@@ -13,6 +13,7 @@ class UploadGallery extends StatefulWidget {
 class _UploadGalleryState extends State<UploadGallery> {
   File? _imageFile;
   dynamic _recognition;
+
   bool shouldRetake = false;
   bool _isLoading = false;
 
@@ -55,78 +56,57 @@ class _UploadGalleryState extends State<UploadGallery> {
   }
 
   Future<void> _pickImage() async {
-    setState(() {
-      _isLoading = true; // Show loading indicator and hide content
-    });
+    try {
+      final picker = ImagePicker();
+      final pickedFile = await picker.pickImage(source: ImageSource.gallery);
 
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => Center(child: CircularProgressIndicator()),
-    );
+      // Don't set _imageFile here, only store the file path
+      String? pickedFilePath = pickedFile?.path;
 
-    final picker = ImagePicker();
-    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
-
-    if (pickedFile != null) {
-      setState(() {
-        _imageFile = File(pickedFile.path);
-      });
-
-      _classifyImage(_imageFile!).then((prediction) {
+      if (pickedFilePath != null) {
+        final prediction = await _classifyImage(File(pickedFilePath));
         if (shouldRetake) {
           shouldRetake = false;
           return;
         }
+
         setState(() {
           _recognition = prediction;
-          _isLoading = false; // Hide loading, show content again
         });
 
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => ClassifiedScreen(
-              imagePath: _imageFile!.path,
-              recognition: _recognition,
-            ),
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (context) => PopScope(
+            canPop: false,
+            onPopInvoked: (didPop) {},
+            child: Center(child: CircularProgressIndicator()),
           ),
         );
-      });
-    } else {
-      // Handle the case where the user cancels image selection
-      setState(() {
-        _isLoading = false; // Ensure content is shown again
-      });
+
+        Future.delayed(Duration(seconds: 3)).then((value) {
+          Navigator.of(context).pop(); // Dismiss the dialog
+          Navigator.of(context).push(MaterialPageRoute(
+            builder: (context) => ClassifiedScreen(
+              imagePath: pickedFilePath,
+              recognition: _recognition,
+              mode: 'upload',
+            ),
+          ));
+        });
+      } else {
+        Navigator.pop(context);
+        Navigator.pop(context);
+      }
+    } catch (error) {
+      print("Error picking image: $error");
+      Navigator.pop(context);
+      setState(() => _isLoading = false);
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: _isLoading // Conditional rendering based on loading state
-          ? const Center(
-              child: Text(
-                "Nothing",
-                style: TextStyle(
-                    color: Colors.white), // Set the text color to white
-              ),
-            )
-          : Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: <Widget>[
-                  if (_imageFile != null) Image.file(_imageFile!),
-                  SizedBox(
-                    height: 50,
-                    child: ElevatedButton(
-                      onPressed: _pickImage,
-                      child: const Text('Upload Image from Gallery'),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-    );
+    return Scaffold();
   }
 }

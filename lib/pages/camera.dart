@@ -4,6 +4,8 @@ import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:image/image.dart' as img;
 import 'package:styleme_thesis/styles.dart';
+import 'package:styleme_thesis/pages/mode.dart';
+import 'package:google_ml_kit/google_ml_kit.dart';
 import 'package:flutter_tflite/flutter_tflite.dart';
 import 'package:styleme_thesis/pages/classified.dart';
 
@@ -45,11 +47,19 @@ class _CameraPageState extends State<CameraPage> with WidgetsBindingObserver {
         );
   }
 
+  final FaceDetector _faceDetector = FaceDetector(
+    options: FaceDetectorOptions(
+      performanceMode: FaceDetectorMode.fast,
+    ),
+  );
+
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     _controller?.dispose();
     closerModel();
+    _faceDetector.close();
+
     super.dispose();
   }
 
@@ -105,58 +115,116 @@ class _CameraPageState extends State<CameraPage> with WidgetsBindingObserver {
 
   void _takePicture() async {
     try {
+      // Wait for the camera controller to initialize
       await _initializeControllerFuture;
+
+      // Turn off the flash
       await _controller!.setFlashMode(FlashMode.off);
 
-      // Show the loading dialog
+      // Show a loading dialog while processing
       showDialog(
         context: context,
         barrierDismissible: false,
         builder: (context) => Center(child: CircularProgressIndicator()),
       );
 
+      // Capture the image
       final capturedImage = await _controller!.takePicture();
       File? image = File(capturedImage.path);
 
-      _classifyImage(image).then((prediction) {
-        // Check the retake flag after the potential delay of image classification
-        if (shouldRetake) {
-          shouldRetake = false; // Reset the flag
-          Navigator.of(context).pop(); // Close the loading dialog
-          return;
-        }
+      // Create an InputImage from the captured image
+      InputImage inputImage = InputImage.fromFile(image);
 
-        setState(() {
-          _recognition = prediction;
-        });
+      // Process the image to detect faces
+      final List<Face> faces = await _faceDetector.processImage(inputImage);
 
-        Timer(const Duration(milliseconds: 500), () {
-          _controller?.resumePreview();
-        });
-
-        // Close the loading dialog before navigating
-        Navigator.of(context).pop();
-
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-              builder: (context) => ClassifiedScreen(
-                  imagePath: capturedImage.path, recognition: _recognition),
-              settings:
-                  RouteSettings(arguments: shouldRetake) // Set arguments here
-
-              ),
-        ).then((shouldRetakeValue) {
-          // Get the value when navigating back
-          if (shouldRetakeValue != null) {
-            shouldRetake = shouldRetakeValue;
+      // If faces are detected, proceed with classification
+      if (faces.isNotEmpty) {
+        _classifyImage(image).then((prediction) {
+          // Check if the image should be retaken
+          if (shouldRetake) {
+            shouldRetake = false; // Reset the flag
+            Navigator.of(context).pop(); // Close the loading dialog
+            return;
           }
+
+          // Update the UI with the classification result
+          setState(() {
+            _recognition = prediction;
+          });
+
+          // Resume camera preview after a short delay
+          Timer(const Duration(milliseconds: 500), () {
+            _controller?.resumePreview();
+          });
+
+          // Close the loading dialog
+          Navigator.of(context).pop();
+
+          // Navigate to the classification results screen
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => ClassifiedScreen(
+                imagePath: capturedImage.path,
+                recognition: _recognition,
+                mode: 'camcam',
+              ),
+              settings: RouteSettings(arguments: shouldRetake),
+            ),
+          ).then((shouldRetakeValue) {
+            // Get the value when navigating back
+            if (shouldRetakeValue != null) {
+              shouldRetake = shouldRetakeValue;
+            }
+          });
+        }).catchError((error) {
+          // Handle errors during classification
+          print('Error during classification: $error');
+          Navigator.of(context).pop();
+          _showErrorDialog('Classification Error');
         });
-      });
+      } else {
+        // No faces detected, close the loading dialog
+        Navigator.of(context).pop();
+        _showErrorDialog('No Face Detected');
+      }
     } catch (e) {
-      print(e);
-      Navigator.of(context).pop(); // Close the dialog in case of errors
+      // Handle other errors during the process
+      print('Error taking picture: $e');
+      Navigator.of(context).pop();
+      _showErrorDialog('Camera Error');
     }
+  }
+
+  void _showErrorDialog(String title) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: Colors.red,
+        title: Center(
+            child: Text(
+          title,
+          style: const TextStyle(color: Colors.white, fontWeight: fontMD),
+        )),
+        actions: [
+          Center(
+            child: ElevatedButton(
+              onPressed: () => Navigator.of(context).pop(),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.white, // Customize background color
+                foregroundColor: Colors.red, // Customize text color
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 5, vertical: 20),
+                textStyle: const TextStyle(fontSize: 18, fontWeight: fontMD),
+              ),
+              child: const Icon(
+                  Icons.refresh), // Replace with reset icon (refresh)
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   void _toggleCameraLens() {
@@ -181,6 +249,23 @@ class _CameraPageState extends State<CameraPage> with WidgetsBindingObserver {
             return Stack(
               children: [
                 Center(child: CameraPreview(_controller!)),
+                Positioned(
+                  top: 50.0,
+                  left: 10,
+                  child: GestureDetector(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => const MyMode()),
+                      );
+                    },
+                    child: const Icon(
+                      Icons.arrow_back,
+                      color: gradient2Color,
+                      size: 35,
+                    ),
+                  ),
+                ),
                 Positioned(
                   bottom: 40.0,
                   right: 50,

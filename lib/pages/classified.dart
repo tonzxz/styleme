@@ -6,8 +6,10 @@ import 'package:styleme_thesis/pages/mode.dart';
 class ClassifiedScreen extends StatelessWidget {
   final String imagePath;
   final dynamic recognition;
+  final String mode;
 
-  ClassifiedScreen({required this.imagePath, required this.recognition});
+  ClassifiedScreen(
+      {required this.imagePath, required this.recognition, required this.mode});
 
   @override
   Widget build(BuildContext context) {
@@ -164,6 +166,7 @@ class ClassifiedScreen extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: <Widget>[
                       // Face Shape Text
+
                       Center(
                         child: Text(
                           '${recognition[0]["label"]} Face Shape',
@@ -255,6 +258,20 @@ class ClassifiedScreen extends StatelessWidget {
     }
 
     return Scaffold(
+      appBar: AppBar(
+        leading: IconButton(
+          // Use the appBar's leading property
+          icon: Icon(Icons.arrow_back, color: gradient2Color, size: 35),
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const MyMode()),
+            );
+          },
+        ),
+        backgroundColor: Colors.transparent, // Make the app bar transparent
+        elevation: 0, // Remove the app bar's shadow
+      ),
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -312,15 +329,21 @@ class ClassifiedScreen extends StatelessWidget {
             // Retake button
             IconButton(
               onPressed: () {
-                // Navigate to mode.dart
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const MyMode()),
-                );
+                if (mode == 'upload') {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => MyMode()),
+                  );
+                } else if (mode == 'camcam') {
+                  Navigator.pop(context); // Navigate back
+                }
+                // Handle other modes or provide a default action if needed
               },
               icon: const Icon(Icons.refresh, size: 30),
               color: gradient2Color,
             ),
+
+            const SizedBox(height: 40),
           ],
         ),
       ),
