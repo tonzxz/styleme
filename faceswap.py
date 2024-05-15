@@ -138,7 +138,7 @@ def get_face_mask(im, landmarks):
 
     im_mask = numpy.array([im_mask, im_mask, im_mask]).transpose((1, 2, 0))
     # Gaussian blur to soften the edges
-    im_mask = cv2.GaussianBlur(im_mask, (5, 5), 10)
+    im_mask = cv2.GaussianBlur(im_mask, (0, 0), 10)
 
     return im_mask
     
