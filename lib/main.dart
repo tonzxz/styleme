@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:styleme_thesis/styles.dart';
 import 'package:styleme_thesis/pages/home.dart';
 import 'package:styleme_thesis/pages/mode.dart';
+import 'package:styleme_thesis/pages/homee.dart';
 import 'package:styleme_thesis/pages/camera.dart';
 
 void main() {
