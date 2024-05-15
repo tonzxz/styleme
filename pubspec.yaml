@@ -74,6 +74,9 @@ flutter:
   assets:
     - assets/images/heart.jpg
     - assets/images/bert.png
+    - assets/images/ekis.png
+    - assets/images/check.png
+
     - assets/images/square/Blunt Chin-Length Layers.jpg
     - assets/images/square/Curly Bob Haircut.jpg
     - assets/images/square/italian bob haircut.jpg

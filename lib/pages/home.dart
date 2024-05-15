@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:styleme_thesis/styles.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:styleme_thesis/pages/mode.dart';
+import 'package:styleme_thesis/pages/homee.dart';
 
 class MyHome extends StatelessWidget {
   const MyHome({super.key});
@@ -87,21 +88,34 @@ class MyHome extends StatelessWidget {
             bottom: 50,
             left: 50,
             right: 50,
-            child: ElevatedButton(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const MyMode()),
-                );
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: gradient2Color, // Customize background color
-                foregroundColor: Colors.white, // Customize text color
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 5, vertical: 20),
-                textStyle: const TextStyle(fontSize: 18, fontWeight: fontMD),
+            child: Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [gradient1Color, gradient2Color],
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                ),
+                borderRadius: BorderRadius.circular(40),
               ),
-              child: const Text('Get Started'),
+              child: ElevatedButton(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const MyMode()),
+                  );
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor:
+                      Colors.transparent, // Make button background transparent
+                  shadowColor: Colors.transparent, // Remove shadow
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 5, vertical: 20),
+                  textStyle: const TextStyle(
+                      fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+                child: const Text('Get Started',
+                    style: TextStyle(color: Colors.white)),
+              ),
             ),
           ),
         ],
