@@ -1,15 +1,78 @@
+import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:styleme_thesis/styles.dart';
 import 'package:styleme_thesis/pages/mode.dart';
+import 'package:http/http.dart' as http;
+import 'package:flutter/services.dart' show ByteData, rootBundle;
+import 'dart:async';
+import 'dart:io';
+import 'package:path_provider/path_provider.dart';
 
-class ClassifiedScreen extends StatelessWidget {
+class ClassifiedScreen extends StatefulWidget {
   final String imagePath;
   final dynamic recognition;
   final String mode;
+  const ClassifiedScreen ({super.key,required this.imagePath, required this.recognition, required this.mode});
 
-  ClassifiedScreen(
-      {required this.imagePath, required this.recognition, required this.mode});
+  @override
+  State<ClassifiedScreen > createState() => _ClassifiedScreenState();
+}
+
+class _ClassifiedScreenState extends State<ClassifiedScreen > {
+
+  List<int>? _newlook;
+  Future<File> getImageFileFromAssets(String path) async {
+  final byteData = await rootBundle.load(path);
+
+  // Create a temporary directory
+  final tempDir = await getTemporaryDirectory();
+  final tempPath = '${tempDir.path}/newlook.png';
+
+  final file = File(tempPath);
+  await file.writeAsBytes(byteData.buffer.asUint8List(), flush: true);
+
+  return file;
+}
+  bool _transferringFace = false;
+  Future transferHair(File selfie, File hairstyle) async {
+    setState(() {
+      _transferringFace = true;
+    });
+    var url = 'http://10.0.0.200:5000/process_image'; 
+    var request = http.MultipartRequest('POST', Uri.parse(url));
+    request.files.add(
+      await http.MultipartFile.fromPath(
+        'selfie',
+        selfie.path,
+      ),
+    );
+    request.files.add(
+      await http.MultipartFile.fromPath(
+        'hairstyle',
+        hairstyle.path,
+      ),
+    );
+    
+    var response = await request.send();
+    if (response.statusCode == 200) {
+      var responseString = await response.stream.bytesToString();
+      Map<String, dynamic> responseData = jsonDecode(responseString);
+      print(responseData);
+      String imageString = responseData['image'];
+      _newlook = base64Decode(imageString);
+      setState(() {
+        _transferringFace = false;
+      });
+    } else {
+        _transferringFace = false;
+      // Error handling
+      print('Failed to process image: ${response.statusCode}');
+    }
+  }
+
+
 
   @override
   Widget build(BuildContext context) {
@@ -135,9 +198,9 @@ class ClassifiedScreen extends StatelessWidget {
 
     // Recognized Shape (with error handling)
     String recognizedShape = 'Unknown';
-    if (recognition != null && recognition.isNotEmpty) {
+    if (widget.recognition != null && widget.recognition.isNotEmpty) {
       try {
-        recognizedShape = recognition[0]["label"];
+        recognizedShape = widget.recognition[0]["label"];
       } catch (e) {
         print('Error parsing recognition data: $e');
       }
@@ -169,7 +232,7 @@ class ClassifiedScreen extends StatelessWidget {
 
                       Center(
                         child: Text(
-                          '${recognition[0]["label"]} Face Shape',
+                          '${widget.recognition[0]["label"]} Face Shape',
                           style: Theme.of(context)
                               .textTheme
                               .headlineSmall
@@ -204,14 +267,20 @@ class ClassifiedScreen extends StatelessWidget {
                             return Column(
                               children: [
                                 Expanded(
-                                  child: ClipRRect(
-                                    borderRadius: BorderRadius.circular(10.0),
-                                    child: SizedBox(
-                                      height: 40,
-                                      width: 140,
-                                      child: Image.asset(
-                                        imagePath,
-                                        fit: BoxFit.cover,
+                                  child: GestureDetector(
+                                    onTap: ()async{
+                                      transferHair(File(widget.imagePath), await getImageFileFromAssets(imagePath));
+                                      Navigator.of(context).pop();
+                                    },
+                                    child: ClipRRect(
+                                      borderRadius: BorderRadius.circular(10.0),
+                                      child: SizedBox(
+                                        height: 40,
+                                        width: 140,
+                                        child: Image.asset(
+                                          imagePath,
+                                          fit: BoxFit.cover,
+                                        ),
                                       ),
                                     ),
                                   ),
@@ -282,7 +351,7 @@ class ClassifiedScreen extends StatelessWidget {
                 alignment: Alignment.center,
                 children: [
                   Text(
-                    '${recognition[0]["label"]} Face Shape',
+                    '${widget.recognition[0]["label"]} Face Shape',
                     style: Theme.of(context).textTheme.headlineLarge?.copyWith(
                           color: gradient2Color, // Choose your desired color
                         ),
@@ -290,13 +359,15 @@ class ClassifiedScreen extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 20),
-              Container(
+              _transferringFace ? const SizedBox(height: 400, width: 300, child: CircularProgressIndicator(color: gradient2Color,),) :  _newlook != null ? SizedBox(height: 400, width: 300,
+                child: Image.memory( Uint8List.fromList(_newlook!)),
+              ) : Container(
                 height: 400,
                 width: 300,
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(20),
                   image: DecorationImage(
-                    image: FileImage(File(imagePath)),
+                    image: FileImage(File(widget.imagePath)),
                     fit: BoxFit.cover,
                   ),
                 ),
@@ -329,12 +400,12 @@ class ClassifiedScreen extends StatelessWidget {
             // Retake button
             IconButton(
               onPressed: () {
-                if (mode == 'upload') {
+                if (widget.mode == 'upload') {
                   Navigator.push(
                     context,
                     MaterialPageRoute(builder: (context) => MyMode()),
                   );
-                } else if (mode == 'camcam') {
+                } else if (widget.mode == 'camcam') {
                   Navigator.pop(context); // Navigate back
                 }
                 // Handle other modes or provide a default action if needed

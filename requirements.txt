@@ -1,0 +1,5 @@
+flask
+cmake
+numpy
+opencv-python
+dlib-19.22.99-cp37-cp37m-win_amd64.whl
