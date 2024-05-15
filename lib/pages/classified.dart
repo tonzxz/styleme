@@ -1,14 +1,14 @@
-import 'dart:convert';
 import 'dart:io';
+import 'dart:io';
+import 'dart:async';
+import 'dart:convert';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 import 'package:styleme_thesis/styles.dart';
 import 'package:styleme_thesis/pages/mode.dart';
-import 'package:http/http.dart' as http;
-import 'package:flutter/services.dart' show ByteData, rootBundle;
-import 'dart:async';
-import 'dart:io';
 import 'package:path_provider/path_provider.dart';
+import 'package:flutter/services.dart' show ByteData, rootBundle;
 
 class ClassifiedScreen extends StatefulWidget {
   final String imagePath;
@@ -40,7 +40,7 @@ class _ClassifiedScreenState extends State<ClassifiedScreen > {
     setState(() {
       _transferringFace = true;
     });
-    var url = 'http://10.0.0.200:5000/process_image'; 
+    var url = 'http://192.168.0.102:5000/process_image'; 
     var request = http.MultipartRequest('POST', Uri.parse(url));
     request.files.add(
       await http.MultipartFile.fromPath(
