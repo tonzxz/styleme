@@ -9,6 +9,7 @@ import 'package:google_ml_kit/google_ml_kit.dart';
 import 'package:flutter_tflite/flutter_tflite.dart';
 import 'package:styleme_thesis/pages/classified.dart';
 
+
 class CameraPage extends StatefulWidget {
   @override
   _CameraPageState createState() => _CameraPageState();
@@ -99,6 +100,8 @@ class _CameraPageState extends State<CameraPage> with WidgetsBindingObserver {
       _initializeCamera();
     }
   }
+  
+
 
   Future<void> _initializeCamera() async {
     if (!mounted) return;
@@ -160,7 +163,7 @@ class _CameraPageState extends State<CameraPage> with WidgetsBindingObserver {
 
           // Close the loading dialog
           Navigator.of(context).pop();
-
+      
           // Navigate to the classification results screen
           Navigator.push(
             context,
