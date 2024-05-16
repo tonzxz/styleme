@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:styleme_thesis/styles.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:styleme_thesis/pages/mode.dart';
 
 void main() {
   runApp(MyApp());
@@ -38,9 +39,12 @@ class MyHomee extends StatelessWidget {
               boxShadow: const [
                 BoxShadow(
                   color: Colors.black12,
-                  blurRadius: 10,
-                  offset:
-                      Offset(0, -5), // Adjust the offset to create a top shadow
+                  blurRadius:
+                      200, // Increase blurRadius for a more pronounced shadow
+                  offset: Offset(
+                      0, -20), // Adjust the offset to create a top shadow
+                  spreadRadius:
+                      50, // Ensure spreadRadius is 0 to limit the shadow to the top
                 ),
               ],
             ),
@@ -48,12 +52,15 @@ class MyHomee extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 const SizedBox(height: 20),
-                const Text(
-                  'APPLICABLE',
-                  style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                  ),
+                Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    Image.asset(
+                      'assets/images/check.png', // Replace with your image path
+                      width: 75, // Set the width according to your needs
+                      height: 75, // Set the height according to your needs
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 10),
                 const Padding(
@@ -63,13 +70,13 @@ class MyHomee extends StatelessWidget {
                     textAlign: TextAlign.center,
                   ),
                 ),
-                const SizedBox(height: 30),
+                const SizedBox(height: 10),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
-                    ApplicableImage('assets/applicable1.png'),
-                    ApplicableImage('assets/applicable2.png'),
-                    ApplicableImage('assets/applicable3.png'),
+                    ApplicableImage('assets/images/app1.png'),
+                    ApplicableImage('assets/images/app2.png'),
+                    ApplicableImage('assets/images/app3.png'),
                   ],
                 ),
               ],
@@ -77,7 +84,7 @@ class MyHomee extends StatelessWidget {
           ),
           Container(
             width: 450,
-            height: 380,
+            height: 400,
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(40),
@@ -91,18 +98,22 @@ class MyHomee extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 const SizedBox(height: 20),
-                Image.asset(
-                  'assets/images/ekis.png', // Replace with your image path
-                  width: 75, // Set the width according to your needs
-                  height: 75, // Set the height according to your needs
-                ),
-                const SizedBox(height: 10),
-                const Text(
-                  'NOT APPLICABLE',
-                  style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                  ),
+                Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    Image.asset(
+                      'assets/images/ekis.png', // Replace with your image path
+                      width: 75, // Set the width according to your needs
+                      height: 75, // Set the height according to your needs
+                    ),
+                    // Text(
+                    //   'NOT APPLICABLE',
+                    //   style: TextStyle(
+                    //     fontSize: 24,
+                    //     fontWeight: FontWeight.bold,
+                    //   ),
+                    // ),
+                  ],
                 ),
                 const SizedBox(height: 10),
                 const Padding(
@@ -113,16 +124,16 @@ class MyHomee extends StatelessWidget {
                     style: TextStyle(color: Colors.red),
                   ),
                 ),
-                const SizedBox(height: 30),
+                const SizedBox(height: 10),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
-                    NotApplicableImage('assets/not_applicable1.png'),
-                    NotApplicableImage('assets/not_applicable2.png'),
-                    NotApplicableImage('assets/not_applicable3.png'),
+                    NotApplicableImage('assets/images/not1.png'),
+                    NotApplicableImage('assets/images/not2.png'),
+                    NotApplicableImage('assets/images/not3.png'),
                   ],
                 ),
-                const SizedBox(height: 30),
+                const SizedBox(height: 20),
                 Container(
                   decoration: BoxDecoration(
                     gradient: const LinearGradient(
@@ -137,7 +148,7 @@ class MyHomee extends StatelessWidget {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                            builder: (context) => const MyHomee()),
+                            builder: (context) => const MyMode()),
                       );
                     },
                     style: ElevatedButton.styleFrom(

@@ -42,6 +42,7 @@ dependencies:
   google_ml_kit: ^0.18.0
   http: ^1.2.1
   path_provider: ^2.0.2
+  shared_preferences: ^2.2.3
 
 dev_dependencies:
   flutter_test:
@@ -76,6 +77,12 @@ flutter:
     - assets/images/bert.png
     - assets/images/ekis.png
     - assets/images/check.png
+    - assets/images/app1.png
+    - assets/images/app2.png
+    - assets/images/app3.png
+    - assets/images/not1.png
+    - assets/images/not2.png
+    - assets/images/not3.png
 
     - assets/images/square/Blunt Chin-Length Layers.jpg
     - assets/images/square/Curly Bob Haircut.jpg

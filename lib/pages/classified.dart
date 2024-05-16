@@ -8,39 +8,54 @@ import 'package:http/http.dart' as http;
 import 'package:styleme_thesis/styles.dart';
 import 'package:styleme_thesis/pages/mode.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:styleme_thesis/pages/ip_utils.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter/services.dart' show ByteData, rootBundle;
 
 class ClassifiedScreen extends StatefulWidget {
   final String imagePath;
   final dynamic recognition;
   final String mode;
-  const ClassifiedScreen ({super.key,required this.imagePath, required this.recognition, required this.mode});
+  const ClassifiedScreen(
+      {super.key,
+      required this.imagePath,
+      required this.recognition,
+      required this.mode});
 
   @override
-  State<ClassifiedScreen > createState() => _ClassifiedScreenState();
+  State<ClassifiedScreen> createState() => _ClassifiedScreenState();
 }
 
-class _ClassifiedScreenState extends State<ClassifiedScreen > {
-
+class _ClassifiedScreenState extends State<ClassifiedScreen> {
   List<int>? _newlook;
   Future<File> getImageFileFromAssets(String path) async {
-  final byteData = await rootBundle.load(path);
+    final byteData = await rootBundle.load(path);
 
-  // Create a temporary directory
-  final tempDir = await getTemporaryDirectory();
-  final tempPath = '${tempDir.path}/newlook.png';
+    // Create a temporary directory
+    final tempDir = await getTemporaryDirectory();
+    final tempPath = '${tempDir.path}/newlook.png';
 
-  final file = File(tempPath);
-  await file.writeAsBytes(byteData.buffer.asUint8List(), flush: true);
+    final file = File(tempPath);
+    await file.writeAsBytes(byteData.buffer.asUint8List(), flush: true);
 
-  return file;
-}
+    return file;
+  }
+
   bool _transferringFace = false;
+  Future<String> _getIpAddress() async {
+    // Private method to fetch IP
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString('ipAddress') ??
+        '192.168.0.102'; // Fallback to default
+  }
+
   Future transferHair(File selfie, File hairstyle) async {
     setState(() {
       _transferringFace = true;
     });
-    var url = 'http://192.168.0.102:5000/process_image'; 
+
+    String ipAddress = await _getIpAddress();
+    var url = 'http://$ipAddress:5000/process_image';
     var request = http.MultipartRequest('POST', Uri.parse(url));
     request.files.add(
       await http.MultipartFile.fromPath(
@@ -54,25 +69,38 @@ class _ClassifiedScreenState extends State<ClassifiedScreen > {
         hairstyle.path,
       ),
     );
-    
-    var response = await request.send();
-    if (response.statusCode == 200) {
-      var responseString = await response.stream.bytesToString();
-      Map<String, dynamic> responseData = jsonDecode(responseString);
-      print(responseData);
-      String imageString = responseData['image'];
-      _newlook = base64Decode(imageString);
+
+    try {
+      var response = await request.send();
+      if (response.statusCode == 200) {
+        var responseString = await response.stream.bytesToString();
+        Map<String, dynamic> responseData = jsonDecode(responseString);
+
+        String imageString = responseData['image'];
+        Uint8List imageBytes = base64Decode(imageString);
+
+        final tempDir = await getTemporaryDirectory();
+        final newlookFile = File('${tempDir.path}/newlook.jpg');
+        await newlookFile.writeAsBytes(imageBytes);
+
+        // Do something with the newlookFile, e.g., display in your UI
+        setState(() {
+          _newlook =
+              imageBytes; // Or _newlook = newlookFile; if you want the File object
+        });
+      } else {
+        // Handle non-200 responses (error handling)
+        print('Failed to process image: ${response.statusCode}');
+      }
+    } catch (e) {
+      // Handle network or request errors
+      print('Error during image transfer: $e');
+    } finally {
       setState(() {
         _transferringFace = false;
       });
-    } else {
-        _transferringFace = false;
-      // Error handling
-      print('Failed to process image: ${response.statusCode}');
     }
   }
-
-
 
   @override
   Widget build(BuildContext context) {
@@ -268,8 +296,11 @@ class _ClassifiedScreenState extends State<ClassifiedScreen > {
                               children: [
                                 Expanded(
                                   child: GestureDetector(
-                                    onTap: ()async{
-                                      transferHair(File(widget.imagePath), await getImageFileFromAssets(imagePath));
+                                    onTap: () async {
+                                      transferHair(
+                                          File(widget.imagePath),
+                                          await getImageFileFromAssets(
+                                              imagePath));
                                       Navigator.of(context).pop();
                                     },
                                     child: ClipRRect(
@@ -359,19 +390,31 @@ class _ClassifiedScreenState extends State<ClassifiedScreen > {
                 ],
               ),
               const SizedBox(height: 20),
-              _transferringFace ? const SizedBox(height: 400, width: 300, child: CircularProgressIndicator(color: gradient2Color,),) :  _newlook != null ? SizedBox(height: 400, width: 300,
-                child: Image.memory( Uint8List.fromList(_newlook!)),
-              ) : Container(
-                height: 400,
-                width: 300,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(20),
-                  image: DecorationImage(
-                    image: FileImage(File(widget.imagePath)),
-                    fit: BoxFit.cover,
-                  ),
-                ),
-              ),
+              _transferringFace
+                  ? const SizedBox(
+                      height: 400,
+                      width: 300,
+                      child: CircularProgressIndicator(
+                        color: gradient2Color,
+                      ),
+                    )
+                  : _newlook != null
+                      ? SizedBox(
+                          height: 400,
+                          width: 300,
+                          child: Image.memory(Uint8List.fromList(_newlook!)),
+                        )
+                      : Container(
+                          height: 400,
+                          width: 300,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(20),
+                            image: DecorationImage(
+                              image: FileImage(File(widget.imagePath)),
+                              fit: BoxFit.cover,
+                            ),
+                          ),
+                        ),
               const SizedBox(height: 20),
               SizedBox(
                 height: 50,

@@ -9,7 +9,6 @@ import 'package:google_ml_kit/google_ml_kit.dart';
 import 'package:flutter_tflite/flutter_tflite.dart';
 import 'package:styleme_thesis/pages/classified.dart';
 
-
 class CameraPage extends StatefulWidget {
   @override
   _CameraPageState createState() => _CameraPageState();
@@ -100,8 +99,6 @@ class _CameraPageState extends State<CameraPage> with WidgetsBindingObserver {
       _initializeCamera();
     }
   }
-  
-
 
   Future<void> _initializeCamera() async {
     if (!mounted) return;
@@ -143,6 +140,13 @@ class _CameraPageState extends State<CameraPage> with WidgetsBindingObserver {
 
       // If faces are detected, proceed with classification
       if (faces.isNotEmpty) {
+        if (faces.length > 1) {
+          // More than one face detected
+          Navigator.of(context).pop();
+          _showErrorDialog('Multiple faces detected');
+          return;
+        }
+
         _classifyImage(image).then((prediction) {
           // Check if the image should be retaken
           if (shouldRetake) {
@@ -163,24 +167,31 @@ class _CameraPageState extends State<CameraPage> with WidgetsBindingObserver {
 
           // Close the loading dialog
           Navigator.of(context).pop();
-      
-          // Navigate to the classification results screen
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => ClassifiedScreen(
-                imagePath: capturedImage.path,
-                recognition: _recognition,
-                mode: 'camcam',
+
+          // Check the confidence value
+          if (_recognition.isNotEmpty &&
+              _recognition[0]['confidence'] >= 0.70) {
+            // Navigate to the classification results screen
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => ClassifiedScreen(
+                  imagePath: capturedImage.path,
+                  recognition: _recognition,
+                  mode: 'camcam',
+                ),
+                settings: RouteSettings(arguments: shouldRetake),
               ),
-              settings: RouteSettings(arguments: shouldRetake),
-            ),
-          ).then((shouldRetakeValue) {
-            // Get the value when navigating back
-            if (shouldRetakeValue != null) {
-              shouldRetake = shouldRetakeValue;
-            }
-          });
+            ).then((shouldRetakeValue) {
+              // Get the value when navigating back
+              if (shouldRetakeValue != null) {
+                shouldRetake = shouldRetakeValue;
+              }
+            });
+          } else {
+            // Show a snackbar if confidence is less than 0.60
+            _showErrorDialog('Retake Picture');
+          }
         }).catchError((error) {
           // Handle errors during classification
           print('Error during classification: $error');
@@ -315,6 +326,16 @@ class _CameraPageState extends State<CameraPage> with WidgetsBindingObserver {
                           ),
                         ),
                       ),
+                    ),
+                  ),
+                ),
+                Center(
+                  child: Container(
+                    width: 240.0,
+                    height: 240.0,
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.white, width: 2.0),
+                      color: Colors.transparent,
                     ),
                   ),
                 ),

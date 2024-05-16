@@ -101,7 +101,7 @@ class MyHome extends StatelessWidget {
                 onPressed: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => const MyMode()),
+                    MaterialPageRoute(builder: (context) => const MyHomee()),
                   );
                 },
                 style: ElevatedButton.styleFrom(
